@@ -8,4 +8,5 @@ public class MessageCodes {
     public final static String FILE_INVALID_SIZE = "file.invalid.size";
     
     public final static String INVALID_PARAMETER_REQUEST = "invalid.parameter.request";
+    public final static String NOT_FOUND = "not.found";
 }

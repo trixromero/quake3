@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -28,8 +29,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import teste.backend.dtos.GameDto;
 import teste.backend.dtos.MessageDto;
+import teste.backend.dtos.PlayerDto;
 import teste.backend.entities.Game;
 import teste.backend.entities.Player;
 import teste.backend.service.GameInfoService;
@@ -54,7 +59,15 @@ public class GameController {
 
 	@Autowired
 	private Messages messages;
-
+	
+	@ApiOperation(value = "Retorna Game de acordo com ID",
+	         notes="Players de cada game podem ser ordenados por quantidade de kills" , 
+	         produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+   @ApiResponses({ 
+      @ApiResponse(code = 200, message = " Busca realizada com sucesso " , response = GameDto.class, responseContainer="Map"),
+      @ApiResponse(code = 400, message = "Entrada inválida"),
+      @ApiResponse(code = 404, message = "Dados não encontrados")
+   })
 	@GetMapping(path = "/{gameNumber}")
 	public ResponseEntity<?> getGameInfo(@PathVariable("gameNumber") Integer gameNumber,
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order) {
@@ -62,29 +75,59 @@ public class GameController {
 	   logger.info(defaultRequestLog(gameNumber,"order="+order));
 	   
 		if (gameNumber == null || gameNumber < 0){
-			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.FILE_EMPTY)), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.INVALID_PARAMETER_REQUEST)), HttpStatus.BAD_REQUEST);
 		}
 
 		Direction playersInnerGameOrderDirection = getOrderDirection(order);
+		Game game = gameInfoService.findGameByGameNumber(gameNumber);
+		
+		if (game == null){
+		   return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
+		}
+		
 		Map<String, GameDto> gamesReponse = mountResponse(
-				Arrays.asList(gameInfoService.findGameByGameNumber(gameNumber)), playersInnerGameOrderDirection);
+				Arrays.asList(game), playersInnerGameOrderDirection);
 		
 		logger.info("Game found" + gamesReponse + " returning http status 200 [OK] ");
 		
 		return ResponseEntity.ok(gamesReponse);
 	}
 
+	@ApiOperation(value = "Retorna Ranking somado de acordo com todos Games",
+            notes="Pode ser ordenado de acordo com quantidade de kills" , 
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+   @ApiResponses({ 
+      @ApiResponse(code = 200, message = " Busca realizada com sucesso " , response = PlayerDto.class, responseContainer="list"),
+      @ApiResponse(code = 400, message = "Entrada inválida"),
+      @ApiResponse(code = 404, message = "Dados não encontrados")
+   })
 	@GetMapping(path = "/ranking")
-	public ResponseEntity<List<Player>> getGamesRanking(@RequestParam(value = "rankingOrder", required = false) String order) {
+	public ResponseEntity<?> getGamesRanking(@RequestParam(value = "rankingOrder", required = false) String order) {
 	   logger.info(defaultRequestLog("order="+order));
 		Direction rankingDirection = getOrderDirection(order);
 		List<Player> ranking = gameInfoService.getRanking(rankingDirection);
-		logger.info("Ranking " + ranking + " returning http status 200 [OK] ");
-		return ResponseEntity.ok(ranking);
+		
+		List<PlayerDto> rankingDto ;
+		
+		if (ranking == null || ranking.isEmpty()){
+		   return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
+		}else{
+		   rankingDto = ranking.stream().map(p-> PlayerDto.toDto( p )).collect( Collectors.toList() );
+		}
+		
+		logger.info("Ranking " + rankingDto + " returning http status 200 [OK] ");
+		return ResponseEntity.ok(rankingDto);
 	}
 
+	  @ApiOperation(value = "Retorna todos os Games processados",
+	            notes="Pode ser filtrado por nome do Player e os Players em cada jogo pode ser ordenados por quantidade de kills" , 
+	            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	   @ApiResponses({ 
+	      @ApiResponse(code = 200, message = " Busca realizada com sucesso " , response = GameDto.class, responseContainer="map"),
+	      @ApiResponse(code = 404, message = "Dados não encontrados")
+	   })
 	@GetMapping()
-	public ResponseEntity<Map<String, GameDto>> getGameInfos(
+	public ResponseEntity<?> getGameInfos(
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order,
 			@RequestParam(value = "playerName", required = false) String playerName) {
 
@@ -94,6 +137,10 @@ public class GameController {
 		
 		List<Game> games =  StringUtils.isEmpty(playerName) ? gameInfoService.retrieveAllGames() : gameInfoService.fingGamesByPlayerName(playerName);
 		
+		if (games == null || games.isEmpty()){
+		   return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
+		}
+		
 		Map<String, GameDto> gamesReponse = mountResponse(games,
 				playersInnerGameOrderDirection);
 		
@@ -102,7 +149,12 @@ public class GameController {
 		return ResponseEntity.ok(gamesReponse);
 	}
 	
-
+	  @ApiOperation(value = "Processo arquivo de Log de quake3 para gerar estaticas de Kill dos jogos",
+              produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+     @ApiResponses({ 
+        @ApiResponse(code = 200, message = " Arquivo recebido com sucesso" , response = GameDto.class, responseContainer="map"),
+        @ApiResponse(code = 400, message = "Arquivo Vazio/Extensão Inválida")
+     })  
 	@PostMapping(path = "uploadFile", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<MessageDto> uploadLogStaticsFile(@RequestParam MultipartFile file) throws IOException {
 
