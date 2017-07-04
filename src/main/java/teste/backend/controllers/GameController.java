@@ -6,7 +6,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
@@ -36,12 +40,17 @@ import teste.backend.utils.Messages;
 @CrossOrigin
 @RequestMapping(path = "games", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class GameController {
+   
+   private final Logger logger = LoggerFactory.getLogger(GameController.class);
 
 	@Autowired
 	private GameInfoService gameInfoService;
 
 	@Autowired
 	private JmsTemplate jmsTemplate;
+	
+	@Autowired
+	private HttpServletRequest request;
 
 	@Autowired
 	private Messages messages;
@@ -50,6 +59,8 @@ public class GameController {
 	public ResponseEntity<?> getGameInfo(@PathVariable("gameNumber") Integer gameNumber,
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order) {
 		
+	   logger.info(defaultRequestLog(gameNumber,"order="+order));
+	   
 		if (gameNumber == null || gameNumber < 0){
 			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.FILE_EMPTY)), HttpStatus.BAD_REQUEST);
 		}
@@ -57,13 +68,18 @@ public class GameController {
 		Direction playersInnerGameOrderDirection = getOrderDirection(order);
 		Map<String, GameDto> gamesReponse = mountResponse(
 				Arrays.asList(gameInfoService.findGameByGameNumber(gameNumber)), playersInnerGameOrderDirection);
+		
+		logger.info("Game found" + gamesReponse + " returning http status 200 [OK] ");
+		
 		return ResponseEntity.ok(gamesReponse);
 	}
 
 	@GetMapping(path = "/ranking")
 	public ResponseEntity<List<Player>> getGamesRanking(@RequestParam(value = "rankingOrder", required = false) String order) {
+	   logger.info(defaultRequestLog("order="+order));
 		Direction rankingDirection = getOrderDirection(order);
 		List<Player> ranking = gameInfoService.getRanking(rankingDirection);
+		logger.info("Ranking " + ranking + " returning http status 200 [OK] ");
 		return ResponseEntity.ok(ranking);
 	}
 
@@ -72,12 +88,17 @@ public class GameController {
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order,
 			@RequestParam(value = "playerName", required = false) String playerName) {
 
+	   logger.info(defaultRequestLog("order="+order,"playerName="+playerName));
+	   
 		Direction playersInnerGameOrderDirection = getOrderDirection(order);
 		
 		List<Game> games =  StringUtils.isEmpty(playerName) ? gameInfoService.retrieveAllGames() : gameInfoService.fingGamesByPlayerName(playerName);
 		
 		Map<String, GameDto> gamesReponse = mountResponse(games,
 				playersInnerGameOrderDirection);
+		
+		logger.info("Games found" + gamesReponse + " returning http status 200 [OK] ");
+		
 		return ResponseEntity.ok(gamesReponse);
 	}
 	
@@ -85,6 +106,8 @@ public class GameController {
 	@PostMapping(path = "uploadFile", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<MessageDto> uploadLogStaticsFile(@RequestParam MultipartFile file) throws IOException {
 
+	   logger.info(defaultRequestLog(file.getOriginalFilename()));
+	   
 		if (file.isEmpty()) {
 			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.FILE_EMPTY)), HttpStatus.BAD_REQUEST);
 		}
@@ -95,6 +118,8 @@ public class GameController {
 		}
 
 		jmsTemplate.convertAndSend("readerQueue", file.getBytes());
+		
+		logger.info("File sent to Queue readerQueue" + file.getOriginalFilename() + " returning http status 200 [OK] ");
 
 		return ResponseEntity.ok(new MessageDto(messages.get(MessageCodes.FILE_RECEIVED)));
 
@@ -115,5 +140,9 @@ public class GameController {
 		return (StringUtils.isEmpty(killersOrder) || killersOrder.equalsIgnoreCase("desc")) ? Sort.Direction.DESC
 				: Sort.Direction.ASC;
 	}
+	
+	private String defaultRequestLog(Object... parameters) {
+      return "Request [" + request.getMethod() + "] uri:" + request.getRequestURI() + " received: " + parameters;
+   }
 
 }
