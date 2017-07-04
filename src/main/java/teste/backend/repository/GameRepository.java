@@ -10,4 +10,10 @@ import teste.backend.entities.Game;
 @Repository
 public interface GameRepository extends MongoRepository<Game, Integer>{
 	
+	public Game findByNumber(Integer number);
+	
+	public List<Game> findByPlayersName(String name);
+	
+	public List<Game>  findByPlayersNameIn(List<String> names);
+	
 }

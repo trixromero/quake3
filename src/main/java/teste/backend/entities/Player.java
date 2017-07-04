@@ -1,7 +1,5 @@
 package teste.backend.entities;
 
-import org.springframework.data.annotation.Id;
-
 public class Player {
 	
 	private String name;
