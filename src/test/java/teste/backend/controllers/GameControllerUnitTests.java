@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -155,6 +156,17 @@ public class GameControllerUnitTests {
 	}
 
 	@Test
+	public void shouldReturn404GetByNumberResultNull() throws Exception {
+
+		when(gameInfoServiceMock.findGameByGameNumber(2)).thenReturn(null);
+		mockMvc.perform(get(BASE_URI + "/2?" + ORDER_KILL + "=asc")).andExpect(status().is(404))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		verify(gameInfoServiceMock, times(1)).findGameByGameNumber(2);
+		verifyNoMoreInteractions(gameInfoServiceMock);
+	}
+
+	@Test
 	public void shouldReturnRankingJson() throws Exception {
 		Player p1 = PlayerBuilder.aPlayer().withKillsCount(100).withName("Joao").build();
 		Direction DESC = Direction.DESC;
@@ -166,6 +178,40 @@ public class GameControllerUnitTests {
 		verify(gameInfoServiceMock, times(1)).getRanking(DESC);
 		verifyNoMoreInteractions(gameInfoServiceMock);
 
+	}
+
+	@Test
+	public void shouldReturn404GetRanking() throws Exception {
+
+		Direction DESC = Direction.DESC;
+		when(gameInfoServiceMock.getRanking(DESC)).thenReturn(Arrays.asList());
+
+		mockMvc.perform(get(BASE_URI + "/ranking")).andExpect(status().is(404))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		when(gameInfoServiceMock.getRanking(DESC)).thenReturn(null);
+		mockMvc.perform(get(BASE_URI + "/ranking")).andExpect(status().is(404))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		verify(gameInfoServiceMock, times(2)).getRanking(DESC);
+		verifyNoMoreInteractions(gameInfoServiceMock);
+
+	}
+
+	@Test
+	public void shouldGet404AllfromAllGameSearch() throws Exception {
+
+		when(gameInfoServiceMock.retrieveAllGames()).thenReturn(Arrays.asList());
+		mockMvc.perform(get(BASE_URI + "?" + ORDER_KILL + "=desc")).andExpect(status().is(404))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		when(gameInfoServiceMock.retrieveAllGames()).thenReturn(null);
+		mockMvc.perform(get(BASE_URI + "?" + ORDER_KILL + "=desc")).andExpect(status().is(404))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		verify(gameInfoServiceMock, times(2)).retrieveAllGames();
+		verifyNoMoreInteractions(gameInfoServiceMock);
+		verifyNoMoreInteractions(gameInfoServiceMock);
 	}
 
 	@Test
@@ -219,6 +265,21 @@ public class GameControllerUnitTests {
 	}
 
 	@Test
+	public void shouldReturn404FromSerachByName() throws Exception {
+
+		when(gameInfoServiceMock.fingGamesByPlayerName("Maria")).thenReturn(Arrays.asList());
+		mockMvc.perform(get(BASE_URI + "?" + ORDER_KILL + "=asc&" + PLAYER_NAME_FILTER + "=Maria"))
+				.andExpect(status().is(404)).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		when(gameInfoServiceMock.fingGamesByPlayerName("Maria")).thenReturn(null);
+		mockMvc.perform(get(BASE_URI + "?" + ORDER_KILL + "=asc&" + PLAYER_NAME_FILTER + "=Maria"))
+				.andExpect(status().is(404)).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+
+		verify(gameInfoServiceMock, times(2)).fingGamesByPlayerName("Maria");
+		verifyNoMoreInteractions(gameInfoServiceMock);
+	}
+
+	@Test
 	public void shouldGetAllGamesByNameAsc() throws Exception {
 		Player p1 = PlayerBuilder.aPlayer().withKillsCount(100).withName("Joao").build();
 		Player p2 = PlayerBuilder.aPlayer().withKillsCount(49).withName("Maria").build();
@@ -231,7 +292,7 @@ public class GameControllerUnitTests {
 
 		when(gameInfoServiceMock.fingGamesByPlayerName("Maria")).thenReturn(Arrays.asList(g1, g2));
 		ResultActions resultAction = mockMvc
-				.perform(get(BASE_URI + "?" + ORDER_KILL + "=asc&"+PLAYER_NAME_FILTER+"=Maria"))
+				.perform(get(BASE_URI + "?" + ORDER_KILL + "=asc&" + PLAYER_NAME_FILTER + "=Maria"))
 				.andExpect(status().is(200)).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
 
 		resultAction.andExpect(jsonPath("$").isNotEmpty()).andExpect(jsonPath("$.game_1.players[0]").value("Maria"));
@@ -256,7 +317,7 @@ public class GameControllerUnitTests {
 
 		when(gameInfoServiceMock.fingGamesByPlayerName("Maria")).thenReturn(Arrays.asList(g1, g2));
 		ResultActions resultAction = mockMvc
-				.perform(get(BASE_URI + "?" + ORDER_KILL + "=desc&"+PLAYER_NAME_FILTER+"=Maria"))
+				.perform(get(BASE_URI + "?" + ORDER_KILL + "=desc&" + PLAYER_NAME_FILTER + "=Maria"))
 				.andExpect(status().is(200)).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
 
 		resultAction.andExpect(jsonPath("$").isNotEmpty()).andExpect(jsonPath("$.game_1.players[0]").value("Joao"));

@@ -45,121 +45,110 @@ import teste.backend.utils.Messages;
 @CrossOrigin
 @RequestMapping(path = "games", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class GameController {
-   
-   private final Logger logger = LoggerFactory.getLogger(GameController.class);
+
+	private final Logger logger = LoggerFactory.getLogger(GameController.class);
 
 	@Autowired
 	private GameInfoService gameInfoService;
 
 	@Autowired
 	private JmsTemplate jmsTemplate;
-	
+
 	@Autowired
 	private HttpServletRequest request;
 
 	@Autowired
 	private Messages messages;
-	
-	@ApiOperation(value = "Retorna Game de acordo com ID",
-	         notes="Players de cada game podem ser ordenados por quantidade de kills" , 
-	         produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-   @ApiResponses({ 
-      @ApiResponse(code = 200, message = " Busca realizada com sucesso " , response = GameDto.class, responseContainer="Map"),
-      @ApiResponse(code = 400, message = "Entrada inv√°lida"),
-      @ApiResponse(code = 404, message = "Dados n√£o encontrados")
-   })
+
+	@ApiOperation(value = "Retorna Game de acordo com ID", notes = "Players de cada game podem ser ordenados por quantidade de kills", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = " Busca realizada com sucesso ", response = GameDto.class, responseContainer = "Map"),
+			@ApiResponse(code = 400, message = "Entrada inv·lida"),
+			@ApiResponse(code = 404, message = "Dados n√£o encontrados") })
 	@GetMapping(path = "/{gameNumber}")
 	public ResponseEntity<?> getGameInfo(@PathVariable("gameNumber") Integer gameNumber,
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order) {
-		
-	   logger.info(defaultRequestLog(gameNumber,"order="+order));
-	   
-		if (gameNumber == null || gameNumber < 0){
-			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.INVALID_PARAMETER_REQUEST)), HttpStatus.BAD_REQUEST);
+
+		logger.info(defaultRequestLog(gameNumber, "order=" + order));
+
+		if (gameNumber == null || gameNumber < 0) {
+			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.INVALID_PARAMETER_REQUEST)),
+					HttpStatus.BAD_REQUEST);
 		}
 
 		Direction playersInnerGameOrderDirection = getOrderDirection(order);
 		Game game = gameInfoService.findGameByGameNumber(gameNumber);
-		
-		if (game == null){
-		   return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
+
+		if (game == null) {
+			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
 		}
-		
-		Map<String, GameDto> gamesReponse = mountResponse(
-				Arrays.asList(game), playersInnerGameOrderDirection);
-		
+
+		Map<String, GameDto> gamesReponse = mountResponse(Arrays.asList(game), playersInnerGameOrderDirection);
+
 		logger.info("Game found" + gamesReponse + " returning http status 200 [OK] ");
-		
+
 		return ResponseEntity.ok(gamesReponse);
 	}
 
-	@ApiOperation(value = "Retorna Ranking somado de acordo com todos Games",
-            notes="Pode ser ordenado de acordo com quantidade de kills" , 
-            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-   @ApiResponses({ 
-      @ApiResponse(code = 200, message = " Busca realizada com sucesso " , response = PlayerDto.class, responseContainer="list"),
-      @ApiResponse(code = 400, message = "Entrada inv√°lida"),
-      @ApiResponse(code = 404, message = "Dados n√£o encontrados")
-   })
+	@ApiOperation(value = "Retorna Ranking somado de acordo com todos Games", notes = "Pode ser ordenado de acordo com quantidade de kills", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = " Busca realizada com sucesso ", response = PlayerDto.class, responseContainer = "list"),
+			@ApiResponse(code = 400, message = "Entrada inv·lida"),
+			@ApiResponse(code = 404, message = "Dados n„o encontrados") })
 	@GetMapping(path = "/ranking")
 	public ResponseEntity<?> getGamesRanking(@RequestParam(value = "rankingOrder", required = false) String order) {
-	   logger.info(defaultRequestLog("order="+order));
+		logger.info(defaultRequestLog("order=" + order));
 		Direction rankingDirection = getOrderDirection(order);
 		List<Player> ranking = gameInfoService.getRanking(rankingDirection);
-		
-		List<PlayerDto> rankingDto ;
-		
-		if (ranking == null || ranking.isEmpty()){
-		   return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
-		}else{
-		   rankingDto = ranking.stream().map(p-> PlayerDto.toDto( p )).collect( Collectors.toList() );
+
+		List<PlayerDto> rankingDto;
+
+		if (ranking == null || ranking.isEmpty()) {
+			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
+		} else {
+			rankingDto = ranking.stream().map(p -> PlayerDto.toDto(p)).collect(Collectors.toList());
 		}
-		
+
 		logger.info("Ranking " + rankingDto + " returning http status 200 [OK] ");
 		return ResponseEntity.ok(rankingDto);
 	}
 
-	  @ApiOperation(value = "Retorna todos os Games processados",
-	            notes="Pode ser filtrado por nome do Player e os Players em cada jogo pode ser ordenados por quantidade de kills" , 
-	            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	   @ApiResponses({ 
-	      @ApiResponse(code = 200, message = " Busca realizada com sucesso " , response = GameDto.class, responseContainer="map"),
-	      @ApiResponse(code = 404, message = "Dados n√£o encontrados")
-	   })
+	@ApiOperation(value = "Retorna todos os Games processados", notes = "Pode ser filtrado por nome do Player e os Players em cada jogo pode ser ordenados por quantidade de kills", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = " Busca realizada com sucesso ", response = GameDto.class, responseContainer = "map"),
+			@ApiResponse(code = 404, message = "Dados n„o encontrados") })
 	@GetMapping()
 	public ResponseEntity<?> getGameInfos(
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order,
 			@RequestParam(value = "playerName", required = false) String playerName) {
 
-	   logger.info(defaultRequestLog("order="+order,"playerName="+playerName));
-	   
+		logger.info(defaultRequestLog("order=" + order, "playerName=" + playerName));
+
 		Direction playersInnerGameOrderDirection = getOrderDirection(order);
-		
-		List<Game> games =  StringUtils.isEmpty(playerName) ? gameInfoService.retrieveAllGames() : gameInfoService.fingGamesByPlayerName(playerName);
-		
-		if (games == null || games.isEmpty()){
-		   return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
+
+		List<Game> games = StringUtils.isEmpty(playerName) ? gameInfoService.retrieveAllGames()
+				: gameInfoService.fingGamesByPlayerName(playerName);
+
+		if (games == null || games.isEmpty()) {
+			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.NOT_FOUND)), HttpStatus.NOT_FOUND);
 		}
-		
-		Map<String, GameDto> gamesReponse = mountResponse(games,
-				playersInnerGameOrderDirection);
-		
+
+		Map<String, GameDto> gamesReponse = mountResponse(games, playersInnerGameOrderDirection);
+
 		logger.info("Games found" + gamesReponse + " returning http status 200 [OK] ");
-		
+
 		return ResponseEntity.ok(gamesReponse);
 	}
-	
-	  @ApiOperation(value = "Processo arquivo de Log de quake3 para gerar estaticas de Kill dos jogos",
-              produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-     @ApiResponses({ 
-        @ApiResponse(code = 200, message = " Arquivo recebido com sucesso" , response = GameDto.class, responseContainer="map"),
-        @ApiResponse(code = 400, message = "Arquivo Vazio/Extens√£o Inv√°lida")
-     })  
+
+	@ApiOperation(value = "Processo arquivo de Log de quake3 para gerar estaticas de Kill dos jogos", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = " Arquivo recebido com sucesso", response = GameDto.class, responseContainer = "map"),
+			@ApiResponse(code = 400, message = "Arquivo Vazio/Extens„o Inv·lida") })
 	@PostMapping(path = "uploadFile", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<MessageDto> uploadLogStaticsFile(@RequestParam MultipartFile file) throws IOException {
 
-	   logger.info(defaultRequestLog(file.getOriginalFilename()));
-	   
+		logger.info(defaultRequestLog(file.getOriginalFilename()));
+
 		if (file.isEmpty()) {
 			return new ResponseEntity<>(new MessageDto(messages.get(MessageCodes.FILE_EMPTY)), HttpStatus.BAD_REQUEST);
 		}
@@ -170,7 +159,7 @@ public class GameController {
 		}
 
 		jmsTemplate.convertAndSend("readerQueue", file.getBytes());
-		
+
 		logger.info("File sent to Queue readerQueue" + file.getOriginalFilename() + " returning http status 200 [OK] ");
 
 		return ResponseEntity.ok(new MessageDto(messages.get(MessageCodes.FILE_RECEIVED)));
@@ -192,9 +181,9 @@ public class GameController {
 		return (StringUtils.isEmpty(killersOrder) || killersOrder.equalsIgnoreCase("desc")) ? Sort.Direction.DESC
 				: Sort.Direction.ASC;
 	}
-	
+
 	private String defaultRequestLog(Object... parameters) {
-      return "Request [" + request.getMethod() + "] uri:" + request.getRequestURI() + " received: " + parameters;
-   }
+		return "Request [" + request.getMethod() + "] uri:" + request.getRequestURI() + " received: " + parameters;
+	}
 
 }

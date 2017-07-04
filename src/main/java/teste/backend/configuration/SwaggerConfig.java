@@ -17,12 +17,12 @@ public class SwaggerConfig {
 	@Bean
 	public Docket api() {
 		return new Docket(DocumentationType.SWAGGER_2).useDefaultResponseMessages(false).apiInfo(apiInfo()).select()
-				.apis(RequestHandlerSelectors.basePackage("teste.backend.controllers")).paths(PathSelectors.regex("/games.*"))
-				.build();
+				.apis(RequestHandlerSelectors.basePackage("teste.backend.controllers"))
+				.paths(PathSelectors.regex("/games.*")).build();
 	}
 
 	private ApiInfo apiInfo() {
-		return new ApiInfoBuilder().title("Quake3-Statics").description("A API to show scores based in Quake3 matches").license("Apache License Version 2.0")
-				.version("1.0").build();
+		return new ApiInfoBuilder().title("Quake3-Statics").description("A API to show scores based in Quake3 matches")
+				.license("Apache License Version 2.0").version("1.0").build();
 	}
 }
