@@ -29,7 +29,7 @@ public class GameControllerUnitTests {
 	@Autowired
 	private MockMvc mockMvc;
 
-	
+	   
 	@MockBean
 	private RestTemplate restTemplateMock;
 	
