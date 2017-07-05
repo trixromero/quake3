@@ -11,8 +11,8 @@ Clonar o repositorio
 navegar ate a pasta raiz
 
 executar:
-mvn clean install (testes unitarios e de integração executados neste passo)
-mvn spring-boot:run
+-mvn clean install (testes unitarios e de integração executados neste passo)
+-mvn spring-boot:run
 
 A aplicação ficará disponivel na porta 8080.
 
