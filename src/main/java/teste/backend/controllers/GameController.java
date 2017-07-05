@@ -61,10 +61,9 @@ public class GameController {
 	private Messages messages;
 
 	@ApiOperation(value = "Retorna Game de acordo com ID", notes = "Players de cada game podem ser ordenados por quantidade de kills", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	@ApiResponses({
-			@ApiResponse(code = 200, message = " Busca realizada com sucesso ", response = GameDto.class, responseContainer = "Map"),
-			@ApiResponse(code = 400, message = "Entrada inv·lida"),
-			@ApiResponse(code = 404, message = "Dados n√£o encontrados") })
+	@ApiResponses({ @ApiResponse(code = 200, message = "", response = GameDto.class, responseContainer = "Map"),
+			@ApiResponse(code = 400, message = "Parametro inv·lido"),
+			@ApiResponse(code = 404, message = "Dados n„o encontrados") })
 	@GetMapping(path = "/{gameNumber}")
 	public ResponseEntity<?> getGameInfo(@PathVariable("gameNumber") Integer gameNumber,
 			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order) {
@@ -91,9 +90,7 @@ public class GameController {
 	}
 
 	@ApiOperation(value = "Retorna Ranking somado de acordo com todos Games", notes = "Pode ser ordenado de acordo com quantidade de kills", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	@ApiResponses({
-			@ApiResponse(code = 200, message = " Busca realizada com sucesso ", response = PlayerDto.class, responseContainer = "list"),
-			@ApiResponse(code = 400, message = "Entrada inv·lida"),
+	@ApiResponses({ @ApiResponse(code = 200, message = "", response = PlayerDto.class, responseContainer = "list"),
 			@ApiResponse(code = 404, message = "Dados n„o encontrados") })
 	@GetMapping(path = "/ranking")
 	public ResponseEntity<?> getGamesRanking(@RequestParam(value = "rankingOrder", required = false) String order) {
@@ -114,8 +111,7 @@ public class GameController {
 	}
 
 	@ApiOperation(value = "Retorna todos os Games processados", notes = "Pode ser filtrado por nome do Player e os Players em cada jogo pode ser ordenados por quantidade de kills", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	@ApiResponses({
-			@ApiResponse(code = 200, message = " Busca realizada com sucesso ", response = GameDto.class, responseContainer = "map"),
+	@ApiResponses({ @ApiResponse(code = 200, message = "", response = GameDto.class, responseContainer = "map"),
 			@ApiResponse(code = 404, message = "Dados n„o encontrados") })
 	@GetMapping()
 	public ResponseEntity<?> getGameInfos(
@@ -142,9 +138,10 @@ public class GameController {
 
 	@ApiOperation(value = "Processo arquivo de Log de quake3 para gerar estaticas de Kill dos jogos", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	@ApiResponses({
-			@ApiResponse(code = 200, message = " Arquivo recebido com sucesso", response = GameDto.class, responseContainer = "map"),
-			@ApiResponse(code = 400, message = "Arquivo Vazio/Extens„o Inv·lida") })
-	@PostMapping(path = "uploadFile", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+			@ApiResponse(code = 200, message = "Arquivo recebido com sucesso", response = GameDto.class, responseContainer = "map"),
+			@ApiResponse(code = 400, message = "Arquivo vazio!"),
+			@ApiResponse(code = 400, message = "Extens„o de arquivo n„o permitida") })
+	@PostMapping(path = "uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<MessageDto> uploadLogStaticsFile(@RequestParam MultipartFile file) throws IOException {
 
 		logger.info(defaultRequestLog(file.getOriginalFilename()));
@@ -168,7 +165,7 @@ public class GameController {
 
 	private Map<String, GameDto> mountResponse(List<Game> games, Direction order) {
 
-		Map<String, GameDto> responseMap = new LinkedHashMap<>();
+		Map<String, GameDto> responseMap = new LinkedHashMap<String, GameDto>();
 		games.stream().forEach(g -> responseMap.put(getGameTag(g.getNumber()), GameDto.toDto(g, order)));
 		return responseMap;
 	}

@@ -53,7 +53,7 @@ public class GameDto {
 		sortedPlayers.sort(byKillCount);
 
 		dto.setPlayers(sortedPlayers.stream().map(p -> p.getName()).collect(Collectors.toList()));
-		dto.kills = new LinkedHashMap<>();
+		dto.kills = new LinkedHashMap<String, Integer>();
 
 		for (Player p : sortedPlayers) {
 			dto.kills.put(p.getName(), p.getKillsCount());

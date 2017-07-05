@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -36,6 +37,8 @@ public class StaticsMinerServiceImpl implements StaticsMinerService {
 
 	@Autowired
 	private NextSequenceService nextSeqService;
+	
+	CountDownLatch countDownLatch;
 
 	@Override
 	@JmsListener(destination = "readerQueue")//, containerFactory = "myFactory")
@@ -63,6 +66,11 @@ public class StaticsMinerServiceImpl implements StaticsMinerService {
 		} catch (IOException e) {
 			throw e;
 		}
+		
+		if(countDownLatch != null) {
+	        countDownLatch.countDown();
+	    }
+		
 	}
 
 	private void resetStatics() {
@@ -134,6 +142,7 @@ public class StaticsMinerServiceImpl implements StaticsMinerService {
 		this.currentGame = currentGame;
 	}
 	
-	
-
+	public void setCountDownLatch(CountDownLatch countDownLatch) {
+		this.countDownLatch = countDownLatch;
+	}
 }
