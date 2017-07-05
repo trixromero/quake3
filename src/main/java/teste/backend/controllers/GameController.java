@@ -66,7 +66,7 @@ public class GameController {
 			@ApiResponse(code = 404, message = "Dados não encontrados") })
 	@GetMapping(path = "/{gameNumber}")
 	public ResponseEntity<?> getGameInfo(@PathVariable("gameNumber") Integer gameNumber,
-			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order) {
+			@RequestParam(value = "playerOrder", required = false) String order) {
 
 		logger.info(defaultRequestLog(gameNumber, "order=" + order));
 
@@ -115,7 +115,7 @@ public class GameController {
 			@ApiResponse(code = 404, message = "Dados não encontrados") })
 	@GetMapping()
 	public ResponseEntity<?> getGameInfos(
-			@RequestParam(value = "playersInnerGameOrderDirectionByKill", required = false) String order,
+			@RequestParam(value = "playerOrder", required = false) String order,
 			@RequestParam(value = "playerName", required = false) String playerName) {
 
 		logger.info(defaultRequestLog("order=" + order, "playerName=" + playerName));
@@ -180,7 +180,11 @@ public class GameController {
 	}
 
 	private String defaultRequestLog(Object... parameters) {
-		return "Request [" + request.getMethod() + "] uri:" + request.getRequestURI() + " received: " + parameters;
+		String paraStr = "";
+		for (Object param : parameters) {
+			paraStr += " " + param.toString();
+		}
+		return "Request [" + request.getMethod() + "] uri:" + request.getRequestURI() + " received: " + paraStr;
 	}
 
 }

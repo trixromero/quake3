@@ -41,7 +41,7 @@ public class StaticsMinerServiceImpl implements StaticsMinerService {
 	CountDownLatch countDownLatch;
 
 	@Override
-	@JmsListener(destination = "readerQueue")//, containerFactory = "myFactory")
+	@JmsListener(destination = "readerQueue")
 	public void extractStaticsFromFile(byte[] file) throws IOException {
 
 		String readLine = "";

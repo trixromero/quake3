@@ -14,8 +14,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import teste.backend.entities.Game;
 import teste.backend.entities.Player;
 
-
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class StaticsMinerServiceImplUnitTests {
@@ -66,7 +64,4 @@ public class StaticsMinerServiceImplUnitTests {
 		List<Player> playersList = staticsMinerService.getCurrentGame().getPlayers().stream().collect(Collectors.toList());
 		assertThat(playersList.get(0).getKillsCount()).isEqualTo(0);
 	}
-	
-	
-
 }

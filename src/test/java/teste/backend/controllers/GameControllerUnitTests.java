@@ -59,7 +59,7 @@ public class GameControllerUnitTests {
 
 	private final static String BASE_URI = "/games";
 
-	private final static String ORDER_KILL = "playersInnerGameOrderDirectionByKill";
+	private final static String ORDER_KILL = "playerOrder";
 
 	private final static String PLAYER_NAME_FILTER = "playerName";
 
